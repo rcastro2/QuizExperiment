@@ -1,0 +1,159 @@
+<html>
+<head>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin="anonymous">
+    <style>
+        #userPhoto{
+            height: 40px;
+            border-radius:50%;
+            box-shadow:black 2px 2px 2px;
+            margin:10px;
+        }
+        .main{
+            background-color:gray;
+        }
+        .link:hover{
+            cursor:hand;
+        }
+
+    </style>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js" integrity="sha384-b/U6ypiBEHpOf/4+1nzFpr53nxSS+GLCkfwBdFNTxtclqqenISfwAzpKaMNFNmj4" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js" integrity="sha384-h0AbiXch4ZDo7tp9hKZ4TsHbi047NrKGLO3SEJAg45jXxnGIfYzk4Si90RDIqNm1" crossorigin="anonymous"></script>
+    <script src="https://www.gstatic.com/firebasejs/4.6.1/firebase.js"></script>
+    <script>
+        $(document).ready(function(){
+            // Initialize Firebase
+            var config = {
+                apiKey: "AIzaSyD2OCsS5aiKipWzsiFJRu_3XlFTzEvjCXI",
+                authDomain: "quizexperiment.firebaseapp.com",
+                databaseURL: "https://quizexperiment.firebaseio.com",
+                projectId: "quizexperiment",
+                storageBucket: "quizexperiment.appspot.com",
+                messagingSenderId: "796238572076"
+            };
+            var questions = [], qid = -1, variables = {};
+            var data;
+            firebase.initializeApp(config);
+            var provider = new firebase.auth.GoogleAuthProvider();
+            firebase.auth().onAuthStateChanged(function(user) {
+                if (user) {
+                    // User is signed in.
+                    var displayName = user.displayName;
+                    $("#userPhoto").attr("src",user.photoURL);
+                    var db = firebase.database().ref();
+                    var topic = $.urlParam('t')
+                    db.child("questions/" + topic).on('value', function(snapshot) {
+                        data = snapshot.val();
+                        console.log(data);
+                        for(var key in data){
+                            questions.push(key);
+                        }
+                        var choice = Math.floor(Math.random() * questions.length);
+                        qid = questions[choice]
+                        var description = data[qid].description;
+                        variables = {};
+
+                        while(description.includes("}")){
+                            var start = description.indexOf("{");
+                            var end = description.indexOf("}");
+                            var rnd = Math.floor(Math.random() * 10 + 1);
+                            var variable = description.substring(start+1,end);
+                            variables[variable]=rnd;
+                            description = description.substring(0,start) + rnd + description.substring(end + 1);
+                        }
+                        $("#description").html(description);
+                    })
+
+                } else {
+                    // User is signed out.
+					window.location = "index.html"
+                }
+            });
+            $("#check").click(function(){
+                var formula = data[qid].formula.replace(/{/g, "variables['").replace(/}/g,"']");
+                var answer = eval(formula);
+                if(answer == parseFloat($("#response").val())){
+                    alert("Good");
+                }else{
+                    alert("Bad");
+                }
+            })
+            $("#logout").click(function(){
+                firebase.auth().signOut().then(function() {
+                    window.location = "index.html"
+                }).catch(function(error) {
+                    var errorCode = error.code;
+                    var errorMessage = error.message;
+                    console.log("Error signing out:\n" + errorMessage);
+                });
+            });
+            firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION);
+            $.urlParam = function(name){
+                var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
+                return results[1] || 0;
+            }
+        })
+        
+    </script>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <a class="navbar-brand" href="index.html">Physics 4 U</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+        
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav mr-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="">Learn</a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Assess
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+                        <a class="dropdown-item" href="#">Motion</a>
+                        <a class="dropdown-item" href="#">Force</a>
+                        <a class="dropdown-item" href="#">Momentum</a>
+                        <a class="dropdown-item" href="#">Circuits</a>
+                    </div>
+                </li>		  
+                <li class="nav-item">
+                    <a class="nav-link" href="">About</a>
+                </li>
+                </ul>
+                <ul class="navbar-nav navbar-right">
+                    <li class="nav-item dropdown" id="signedin">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <img src="" id="userPhoto">
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+                            <a class="dropdown-item" href="#">Progress</a>
+    
+                            <a class="dropdown-item link" id="logout">Log Out</a>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+      <hr>
+      <div class="card">
+        <div class="card-header">
+            Featured
+        </div>
+        <div class="card-body">
+            <h4 class="card-title" id="description">Special title treatment</h4>
+            <input type="text" id="response">
+            
+            <a href="#" class="btn btn-primary" id="check">Check</a>
+        </div>
+        <div class="card-footer">
+                <div id="answer"></div>
+        </div>
+        </div>
+
+
+</body>
+</html>

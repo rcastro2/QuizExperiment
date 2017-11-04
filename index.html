@@ -14,6 +14,7 @@
         .link:hover{
             cursor:hand;
         }
+        #signedin, #signedout,#assessments{display: none;}
 
     </style>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
@@ -37,48 +38,24 @@
             firebase.auth().onAuthStateChanged(function(user) {
                 if (user) {
                     // User is signed in.
+                    hideall();
+					document.getElementById("signedin").style.display = "block";
+                    document.getElementById("assessments").style.display = "block";
                     var displayName = user.displayName;
-                    var email = user.email;
-                    var emailVerified = user.emailVerified;
                     $("#userPhoto").attr("src",user.photoURL);
-                    var isAnonymous = user.isAnonymous;
-                    var uid = user.uid;
-                    var providerData = user.providerData;
-                    var db = firebase.database().ref();
-                    db.child('users/' + user.uid + "/login").push({
-                        TS: Date()
-                    });
-                    var topic = "force"
-                    db.child("questions/" + topic).on('value', function(snapshot) {
-                        var data = snapshot.val();
-                        console.log(data);
-                        var description = data.q1.description;
-                        
-                        var variables = {}
-                        while(description.includes("}")){
-                            var start = description.indexOf("{");
-                            var end = description.indexOf("}");
-                            var rnd = Math.floor(Math.random() * 10 + 1);
-                            var variable = description.substring(start+1,end);
-                            variables[variable]=rnd;
-                            description = description.substring(0,start) + rnd + description.substring(end + 1);
-                        }
-
-                        var formula = data.q1.formula.replace(/{/g, "variables['").replace(/}/g,"']");
-                        $("#answer").html(eval(formula));
-                        console.log(eval(formula));
-                        console.log(variables);
-                        $("#description").html(description);
-                    })
-
                 } else {
                     // User is signed out.
-                    firebase.auth().signInWithRedirect(provider);
+                    hideall();
+					document.getElementById("signedout").style.display = "block";
                 }
+            });
+            $("#login").click(function(){
+                firebase.auth().signInWithRedirect(provider);
             });
             $("#logout").click(function(){
                 firebase.auth().signOut().then(function() {
-                    //Blah
+                    hideall();
+                    document.getElementById("login").style.display = "block";
                 }).catch(function(error) {
                     var errorCode = error.code;
                     var errorMessage = error.message;
@@ -86,6 +63,11 @@
                 });
             });
             firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION);
+            var hideall = function(){
+                document.getElementById("signedin").style.display = "none";
+                document.getElementById("signedout").style.display = "none";
+                document.getElementById("assessments").style.display = "none";
+			}
         })
         
     </script>
@@ -100,37 +82,47 @@
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
           <ul class="navbar-nav mr-auto">
             <li class="nav-item">
-              <a class="nav-link" href="">Blah</a>
+              <a class="nav-link" href="">Learn</a>
             </li>
-            <li class="nav-item">
-              <a class="nav-link" href="">Blah</a>
+            <li class="nav-item dropdown" id="assessments">
+                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  Assessment
+                </a>
+                <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+                  <a class="dropdown-item" href="assessment.html?t=motion">Motion</a>
+                  <a class="dropdown-item" href="assessment.html?t=force">Force</a>
+                  <a class="dropdown-item" href="assessment.html?t=momentum">Momentum</a>
+                  <a class="dropdown-item" href="assessment.html?t=circuits">Circuits</a>
+                </div>
             </li>		  
             <li class="nav-item">
-              <a class="nav-link" href="">Blah</a>
+              <a class="nav-link" href="">About</a>
             </li>
           </ul>
           <ul class="navbar-nav navbar-right">
-            <li class="nav-item">
-              <a class="nav-link link" id="logout"><img src="" id="userPhoto">Log Out</a>
-            </li>
+                <li class="nav-item dropdown" id="signedin">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <img src="" id="userPhoto">
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+                        <a class="dropdown-item" href="#">Progress</a>
+
+                        <a class="dropdown-item link" id="logout">Log Out</a>
+                    </div>
+                </li>
+                <li class="nav-item dropdown" id="signedout">
+                    <a class="dropdown-item link" id="login">Log In</a>
+                </li>
           </ul>
         </div>
-      </nav>
-      <hr>
-      <div class="card">
-        <div class="card-header">
-            Featured
+    </nav>
+    <hr>
+    <div class="jumbotron jumbotron-fluid">
+        <div class="container">
+          <h1 class="display-3">Physics 4 U</h1>
+          <p class="lead">Proficiency through practice.</p>
         </div>
-        <div class="card-body">
-            <h4 class="card-title" id="description">Special title treatment</h4>
-            <input type="text" id="response">
-            
-            <a href="#" class="btn btn-primary">Check</a>
-        </div>
-        <div class="card-footer">
-                <div id="answer"></div>
-        </div>
-        </div>
+    </div>  
 
 
 </body>

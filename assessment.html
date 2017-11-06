@@ -33,8 +33,7 @@
                 messagingSenderId: "796238572076"
             };
             var questions = [], question = "", qid = -1, variables = {};
-            var data, user;
-            var topic = $.urlParam('t');
+            var data, user, topic;
             firebase.initializeApp(config);
             var provider = new firebase.auth.GoogleAuthProvider();
             var db = firebase.database().ref();
@@ -42,6 +41,7 @@
                 if (visitor) {
                     // User is signed in.
                     user = visitor;
+                    topic = $.urlParam('t')
                     $("#userPhoto").attr("src",user.photoURL);        
                     $("#topic").html(topic.toCamelCase());
                     db.child("questions/" + topic).once('value', function(snapshot) {
@@ -73,7 +73,7 @@
                     $("#response").val("")
                     $("#check").html("Check");
                 }
-
+                console.log('users/' + user.uid + "/" + topic)
                 db.child('users/' + user.uid + "/" + topic).push({
                     result:{
                         qid:qid,
@@ -107,8 +107,9 @@
                     var rnd = Math.floor(Math.random() * 10 + 1);
                     var variable = description.substring(start+1,end);
                     variables[variable]=rnd;
-                    question = description.substring(0,start) + rnd + description.substring(end + 1);
+                    description = description.substring(0,start) + rnd + description.substring(end + 1);
                 };
+                question = description;
                 $("#description").html(question);
             }
             $.urlParam = function(name){
@@ -116,8 +117,8 @@
                 return results[1] || 0;
             }
             String.prototype.toCamelCase = function() {
-					return this.substr( 0, 1 ).toUpperCase() + this.substr( 1 ).toLowerCase();
-				}
+                return this.substr( 0, 1 ).toUpperCase() + this.substr( 1 ).toLowerCase();
+            }
         })
         
     </script>

@@ -32,52 +32,58 @@
                 storageBucket: "quizexperiment.appspot.com",
                 messagingSenderId: "796238572076"
             };
-            var questions = [], qid = -1, variables = {};
-            var data;
+            var questions = [], question = "", qid = -1, variables = {};
+            var data, user;
+            var topic = $.urlParam('t');
             firebase.initializeApp(config);
             var provider = new firebase.auth.GoogleAuthProvider();
-            firebase.auth().onAuthStateChanged(function(user) {
-                if (user) {
+            var db = firebase.database().ref();
+            firebase.auth().onAuthStateChanged(function(visitor) {
+                if (visitor) {
                     // User is signed in.
-                    var displayName = user.displayName;
-                    $("#userPhoto").attr("src",user.photoURL);
-                    var db = firebase.database().ref();
-                    var topic = $.urlParam('t')
-                    db.child("questions/" + topic).on('value', function(snapshot) {
+                    user = visitor;
+                    $("#userPhoto").attr("src",user.photoURL);        
+                    $("#topic").html(topic.toCamelCase());
+                    db.child("questions/" + topic).once('value', function(snapshot) {
                         data = snapshot.val();
-                        console.log(data);
                         for(var key in data){
                             questions.push(key);
                         }
-                        var choice = Math.floor(Math.random() * questions.length);
-                        qid = questions[choice]
-                        var description = data[qid].description;
-                        variables = {};
-
-                        while(description.includes("}")){
-                            var start = description.indexOf("{");
-                            var end = description.indexOf("}");
-                            var rnd = Math.floor(Math.random() * 10 + 1);
-                            var variable = description.substring(start+1,end);
-                            variables[variable]=rnd;
-                            description = description.substring(0,start) + rnd + description.substring(end + 1);
-                        }
-                        $("#description").html(description);
+                        randomQuestion();
                     })
-
                 } else {
                     // User is signed out.
 					window.location = "index.html"
                 }
             });
             $("#check").click(function(){
-                var formula = data[qid].formula.replace(/{/g, "variables['").replace(/}/g,"']");
-                var answer = eval(formula);
-                if(answer == parseFloat($("#response").val())){
-                    alert("Good");
-                }else{
-                    alert("Bad");
+                if($("#check").html() == "Check"){
+                    var formula = data[qid].formula.replace(/{/g, "variables['").replace(/}/g,"']");
+                    var answer = eval(formula);
+                    var response =  parseFloat($("#response").val());
+                    if(answer == response){
+                        $("#result").html("Correct!");
+                    }else{
+                        $("#result").html("The correct response was " + answer);
+                    }
+                    $("#check").html("Next");
+                }else if($("#check").html() == "Next"){
+                    randomQuestion();
+                    $("#result").html("");
+                    $("#response").val("")
+                    $("#check").html("Check");
                 }
+
+                db.child('users/' + user.uid + "/" + topic).push({
+                    result:{
+                        qid:qid,
+                        question: question,
+                        response: response,
+                        correct: answer == response,
+                        ts: Date()
+                    }
+
+                });
             })
             $("#logout").click(function(){
                 firebase.auth().signOut().then(function() {
@@ -89,10 +95,29 @@
                 });
             });
             firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION);
+            var randomQuestion = function(){
+                var choice = Math.floor(Math.random() * (questions.length - 1));
+                qid = questions[choice]
+                var description = data[qid].description;
+                variables = {};
+
+                while(description.includes("}")){
+                    var start = description.indexOf("{");
+                    var end = description.indexOf("}");
+                    var rnd = Math.floor(Math.random() * 10 + 1);
+                    var variable = description.substring(start+1,end);
+                    variables[variable]=rnd;
+                    question = description.substring(0,start) + rnd + description.substring(end + 1);
+                };
+                $("#description").html(question);
+            }
             $.urlParam = function(name){
                 var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
                 return results[1] || 0;
             }
+            String.prototype.toCamelCase = function() {
+					return this.substr( 0, 1 ).toUpperCase() + this.substr( 1 ).toLowerCase();
+				}
         })
         
     </script>
@@ -114,10 +139,10 @@
                         Assess
                     </a>
                     <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-                        <a class="dropdown-item" href="#">Motion</a>
-                        <a class="dropdown-item" href="#">Force</a>
-                        <a class="dropdown-item" href="#">Momentum</a>
-                        <a class="dropdown-item" href="#">Circuits</a>
+                        <a class="dropdown-item" href="assessment.html?t=motion">Motion</a>
+                        <a class="dropdown-item" href="assessment.html?t=force">Force</a>
+                        <a class="dropdown-item" href="assessment.html?t=momentum">Momentum</a>
+                        <a class="dropdown-item" href="assessment.html?t=circuit">Circuit</a>
                     </div>
                 </li>		  
                 <li class="nav-item">
@@ -132,7 +157,7 @@
                         <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
                             <a class="dropdown-item" href="#">Progress</a>
     
-                            <a class="dropdown-item link" id="logout">Log Out</a>
+                            <a class="dropdown-item" id="logout">Log Out</a>
                         </div>
                     </li>
                 </ul>
@@ -140,17 +165,17 @@
         </nav>
       <hr>
       <div class="card">
-        <div class="card-header">
-            Featured
+        <div class="card-header" >
+            <h3 id="topic"></h3>
         </div>
         <div class="card-body">
-            <h4 class="card-title" id="description">Special title treatment</h4>
+            <h4 class="card-title" id="description"></h4>
             <input type="text" id="response">
             
-            <a href="#" class="btn btn-primary" id="check">Check</a>
+            <a class="btn btn-primary link" style="color:white" id="check">Check</a>
         </div>
         <div class="card-footer">
-                <div id="answer"></div>
+                <h4 id="result"></h4>
         </div>
         </div>
 

@@ -61,7 +61,7 @@
                     var formula = data[qid].formula.replace(/{/g, "variables['").replace(/}/g,"']");
                     var answer = eval(formula);
                     var response =  parseFloat($("#response").val());
-                    if(answer == response){
+                    if(checkResponse(answer,response)){
                         $("#result").html("Correct!");
                     }else{
                         $("#result").html("The correct response was " + answer);
@@ -118,8 +118,17 @@
             String.prototype.toCamelCase = function() {
                 return this.substr( 0, 1 ).toUpperCase() + this.substr( 1 ).toLowerCase();
             }
+            var checkResponse = function(answer,response){
+                var ans = answer.toString();
+                var decimalPosition= ans.indexOf(".");
+                if(decimalPosition != -1 && (ans.length - decimalPosition) > 2){
+                    answer = parseFloat(answer.toFixed(2));
+                }
+                return answer == response;
+            }
+
         })
-        
+
     </script>
 </head>
 <body>

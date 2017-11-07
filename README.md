@@ -1,4 +1,18 @@
-#Quiz Experminet
+#Quiz Experiment
 
-<h1>Sunburst</h1>
-<img src="https://github.com/sbartels6526/Samantha_TurtleDesignProject/blob/master/IMAGE.png">
+<h1>Physics 4 U</h1>
+<hr>
+<h3>Background</h3>
+<p>
+   Project aims to create a platform that is capable of generating random questions with random values in order to provide students unique practice problems. 
+</p>
+<h3>Technology</h3>
+<p>
+    ...
+</p>
+<h3>Usage</h3>
+<p>
+    ...
+</p>
+
+

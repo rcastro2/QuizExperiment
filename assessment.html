@@ -66,24 +66,23 @@
                     }else{
                         $("#result").html("The correct response was " + answer);
                     }
+                    db.child('users/' + user.uid + "/" + topic).push({
+                        result:{
+                            qid:qid,
+                            question: question,
+                            response: response,
+                            correct: answer == response,
+                            ts: Date()
+                        }
+
+                    });
                     $("#check").html("Next");
                 }else if($("#check").html() == "Next"){
                     randomQuestion();
                     $("#result").html("");
                     $("#response").val("")
                     $("#check").html("Check");
-                }
-                console.log('users/' + user.uid + "/" + topic)
-                db.child('users/' + user.uid + "/" + topic).push({
-                    result:{
-                        qid:qid,
-                        question: question,
-                        response: response,
-                        correct: answer == response,
-                        ts: Date()
-                    }
-
-                });
+                }                
             })
             $("#logout").click(function(){
                 firebase.auth().signOut().then(function() {

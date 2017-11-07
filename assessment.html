@@ -85,13 +85,18 @@
                 }                
             })
             $("#logout").click(function(){
-                firebase.auth().signOut().then(function() {
+                    firebase.auth().signOut().then(function() {
                     window.location = "index.html"
                 }).catch(function(error) {
                     var errorCode = error.code;
                     var errorMessage = error.message;
                     console.log("Error signing out:\n" + errorMessage);
                 });
+            });
+            $("#progress").click(function(){
+                db.child('users/' + user.uid).once('value',function(snapshot){
+                    console.log(snapshot.val());
+                })
             });
             firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION);
             var randomQuestion = function(){
@@ -164,9 +169,9 @@
                             <img src="" id="userPhoto">
                         </a>
                         <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-                            <a class="dropdown-item" href="#">Progress</a>
+                            <a class="dropdown-item link" id="progress">Progress</a>
     
-                            <a class="dropdown-item" id="logout">Log Out</a>
+                            <a class="dropdown-item link" id="logout">Log Out</a>
                         </div>
                     </li>
                 </ul>

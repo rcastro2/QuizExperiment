@@ -21,6 +21,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js" integrity="sha384-b/U6ypiBEHpOf/4+1nzFpr53nxSS+GLCkfwBdFNTxtclqqenISfwAzpKaMNFNmj4" crossorigin="anonymous"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js" integrity="sha384-h0AbiXch4ZDo7tp9hKZ4TsHbi047NrKGLO3SEJAg45jXxnGIfYzk4Si90RDIqNm1" crossorigin="anonymous"></script>
     <script src="https://www.gstatic.com/firebasejs/4.6.1/firebase.js"></script>
+    <script src="d3.js"></script>
+    <script src="c3.js"></script>
     <script>
         $(document).ready(function(){
             // Initialize Firebase
@@ -61,8 +63,10 @@
                     var formula = data[qid].formula.replace(/{/g, "variables['").replace(/}/g,"']");
                     var answer = eval(formula);
                     var response =  parseFloat($("#response").val());
+                    var status = "incorrect";
                     if(checkResponse(answer,response)){
                         $("#result").html("Correct!");
+                        status = "correct";
                     }else{
                         $("#result").html("The correct response was " + answer);
                     }
@@ -71,7 +75,8 @@
                             qid:qid,
                             question: question,
                             response: response,
-                            correct: answer == response,
+                            answer: answer,
+                            status: status,
                             ts: Date()
                         }
 
@@ -95,7 +100,33 @@
             });
             $("#progress").click(function(){
                 db.child('users/' + user.uid).once('value',function(snapshot){
-                    console.log(snapshot.val());
+                    data = snapshot.val()
+                    var assessments = {};
+                    for(var category  in data){
+                        assessments[category] = {"total": 0,"correct": 0};
+                        for(var question in data[category]){
+                            assessments[category]["total"]++;
+                            if(data[category][question].result.status == "correct"){
+                                assessments[category]["correct"]++;
+                            }
+                        }
+                    }
+                    
+                    var chart = c3.generate({
+                        bindto: '#chart',
+                        data: {
+                            columns: [
+                                ['data1', 30, 200, 100, 400, 150, 250],
+                                ['data2', 130, 100, 140, 200, 150, 50]
+                            ],
+                            type: 'bar'
+                        },
+                        bar: {
+                            width: {
+                                ratio: 0.5 // this makes bar width 50% of length between ticks
+                            }
+                        }
+                    });
                 })
             });
             firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION);
@@ -131,7 +162,6 @@
                 }
                 return answer == response;
             }
-
         })
 
     </script>
@@ -177,8 +207,8 @@
                 </ul>
             </div>
         </nav>
-      <hr>
-      <div class="card">
+    <hr>
+    <div class="card">
         <div class="card-header" >
             <h3 id="topic"></h3>
         </div>
@@ -191,7 +221,8 @@
         <div class="card-footer">
                 <h4 id="result"></h4>
         </div>
-        </div>
+    </div>
+    <div id="chart"></div>
 
 
 </body>

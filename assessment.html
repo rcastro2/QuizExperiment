@@ -101,30 +101,42 @@
             $("#progress").click(function(){
                 db.child('users/' + user.uid).once('value',function(snapshot){
                     data = snapshot.val()
-                    var assessments = {};
+                    var totals = ["Total"],corrects = ["Correct"], categories = ['x'];
+                    var current = 0, total = 1, correct = 2;
                     for(var category  in data){
-                        assessments[category] = {"total": 0,"correct": 0};
+                        var total = 0, correct = 0;
+                        categories.push(category.toCamelCase());
                         for(var question in data[category]){
-                            assessments[category]["total"]++;
+                            total++;
                             if(data[category][question].result.status == "correct"){
-                                assessments[category]["correct"]++;
+                                correct++;
                             }
                         }
+                        totals.push(total);
+                        corrects.push(correct);
+                        current++;
                     }
-                    
                     var chart = c3.generate({
                         bindto: '#chart',
                         data: {
+                            x:'x',
                             columns: [
-                                ['data1', 30, 200, 100, 400, 150, 250],
-                                ['data2', 130, 100, 140, 200, 150, 50]
+                                categories,corrects,totals
                             ],
-                            type: 'bar'
+                            type: 'bar',
                         },
-                        bar: {
-                            width: {
-                                ratio: 0.5 // this makes bar width 50% of length between ticks
+                        axis:{
+                            x:{
+                                type:'category'
+                            },
+                            y: {
+                                tick: {
+                                  values: [0, 1,2,3,4,5,6,7]
+                                }
                             }
+                        },
+                        color:{
+                            pattern:['yellow','orange']
                         }
                     });
                 })
